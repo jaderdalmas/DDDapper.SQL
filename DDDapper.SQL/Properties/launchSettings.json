@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "DDDapper.SQL": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -2,6 +2,31 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>DDD in Dapper to SQL</Description>
+    <Copyright>Copyright</Copyright>
+    <PackageTags>DDD;Dapper;SQL</PackageTags>
+    <RepositoryType>GitHub</RepositoryType>
+    <RepositoryUrl>https://github.com/jaderdalmas/DDDapper.SQL</RepositoryUrl>
+    <PackageProjectUrl>https://www.nuget.org/packages/DDDapper.SQL/</PackageProjectUrl>
+    <ApplicationIcon />
+    <OutputType>Library</OutputType>
+    <StartupObject />
+    <Authors>Jader Dalmas</Authors>
+    <Company>Case Imagine</Company>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <NeutralLanguage></NeutralLanguage>
+    <Win32Resource />
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="1.50.4" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
 
 </Project>
