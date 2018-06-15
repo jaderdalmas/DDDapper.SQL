@@ -278,7 +278,7 @@ namespace Back.Services
             values.ToList().ForEach(value => Creating(ref value));
             if (_BaseRepository.PostDataMultiple<T>(values, fields))
             {
-                Created(ref values);
+                values.ToList().ForEach(value => Created(ref value));
                 return values;
             }
             else
@@ -334,17 +334,13 @@ namespace Back.Services
                     throw new NoContentException();
                 if (value.GetType().BaseType.Equals(typeof(BaseModel)) && !(Boolean)result.GetType().GetMethod("RowVersion", new Type[1] { typeof(BaseModel) }).Invoke(result, new object[1] { value }))
                     throw new RowVersionException();
-
-                Updating(ref value);
             }
+
+            values.ToList().ForEach(value => Updating(ref value));
 
             if (_BaseRepository.PutDataMultiple<T>(values))
             {
-                for (int i = 0; i < values.Count(); i++)
-                {
-                    T value = values.ElementAt(i);
-                    Updated(ref value);
-                }
+                values.ToList().ForEach(value => Updated(ref value));
                 return values;
             }
             else
@@ -353,14 +349,19 @@ namespace Back.Services
 
         #endregion
 
-        public virtual T Delete<T>(Guid value)
+        #region Delete
+
+        public virtual T Delete<T>(IEnumerable<Guid> values, IEnumerable<String> fields = null, Boolean combine = false, Boolean all = false)
         {
-            ParameterValidate(value);
-            T result = Validate(_BaseRepository.GetData<T>(value));
+            fields = _BaseRepository.ValidateIdNames(fields, true);
+            if (!ParameterValidate(values) || (values.Count() % fields.Count() != 0 && !combine))
+                throw new BadParameterException();
+
+            T result = Validate(_BaseRepository.GetData<T>(values.Select(x => x.ToString()), fields, combine, all).FirstOrDefault());
 
             Deleting(ref result);
 
-            if (_BaseRepository.PutData<T>(result))
+            if (_BaseRepository.PutData<T>(result, fields, combine))
             {
                 Deleted(ref result);
                 return result;
@@ -391,23 +392,53 @@ namespace Back.Services
                 throw new NoRowAffectedException();
         }
 
-        public virtual T Delete<T>(IEnumerable<Guid> values, IEnumerable<String> fields, Boolean combine = false, Boolean all = false)
+        public virtual IEnumerable<T> DeleteMultiple<T>(IEnumerable<Guid> values, Boolean all = false, string field = "id")
         {
-            if (!ParameterValidate(values) || !ParameterValidate(fields) || values.Count() != fields.Count())
+            if (!ParameterValidate(values))
                 throw new BadParameterException();
 
-            T result = Validate(_BaseRepository.GetData<T>(values.Select(x => x.ToString()), fields, combine, all).FirstOrDefault());
+            IEnumerable<T> result = Validate(_BaseRepository.GetData<T>(values, all, field));
 
-            Deleting(ref result);
+            result.ToList().ForEach(value => Deleting(ref value));
 
-            if (_BaseRepository.PutData<T>(result, fields, combine))
+            if (_BaseRepository.PutDataMultiple<T>(result))
             {
-                Deleted(ref result);
+                result.ToList().ForEach(value => Deleted(ref value));
                 return result;
             }
             else
                 throw new NoRowAffectedException();
         }
+
+        public virtual IEnumerable<T> DeleteMultiple<T>(IEnumerable<T> values)
+        {
+            ParameterValidate(values);
+
+            if (values.GetType().BaseType.Equals(typeof(BaseModel)))
+            {
+                IEnumerable<T> results = Validate(GetDatasByProperties(values));
+                for (int i = 0; i < values.Count(); i++)
+                {
+                    T value = values.ElementAt(i);
+                    T result = results.Where(x => GetProperty(value).Equals(GetProperty(x))).FirstOrDefault();
+
+                    if (!(Boolean)result.GetType().GetMethod("RowVersion", new Type[1] { typeof(BaseModel) }).Invoke(result, new object[1] { value }))
+                        throw new RowVersionException();
+                }
+            }
+
+            values.ToList().ForEach(value => Deleting(ref value));
+
+            if (_BaseRepository.PutDataMultiple<T>(values))
+            {
+                values.ToList().ForEach(value => Deleted(ref value));
+                return values;
+            }
+            else
+                throw new NoRowAffectedException();
+        }
+
+        #endregion
 
         public virtual T Drop<T>(Guid value)
         {

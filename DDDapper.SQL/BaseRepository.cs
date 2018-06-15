@@ -285,7 +285,7 @@ namespace Back.Repositories
         public virtual IEnumerable<T> GetData<T>(IEnumerable<String> values, IEnumerable<String> fields, Boolean combine = false, Boolean all = false)
         {
             fields = ValidateIdNames(fields, true);
-            if (values == null || values.Count().Equals(0) || values.Count() % fields.Count() != 0)
+            if (values == null || !values.Any() || values.Count() % fields.Count() != 0)
                 return null;
 
             StringBuilder query = new StringBuilder();
