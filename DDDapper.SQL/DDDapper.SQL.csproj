@@ -18,6 +18,9 @@
     <NeutralLanguage></NeutralLanguage>
     <Win32Resource />
     <SignAssembly>false</SignAssembly>
+    <AssemblyVersion>1.0.0.0001</AssemblyVersion>
+    <FileVersion>1.0.0.0001</FileVersion>
+    <Version>1.0.0.0001</Version>
   </PropertyGroup>
 
   <ItemGroup>

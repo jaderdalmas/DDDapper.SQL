@@ -101,9 +101,9 @@ namespace Back.Services
         /// <summary>
         /// Get Property from Value | if idName is empty, use RepNameId
         /// </summary>
-        public virtual object GetProperty<T>(T value, String idName = "")
+        public virtual object GetProperty<T>(T value, String field = "")
         {
-            string propName = (String.IsNullOrWhiteSpace(idName) ? _BaseRepository.nameId : idName);
+            string propName = (String.IsNullOrWhiteSpace(field) ? _BaseRepository.nameId : field);
             if (value.GetType().GetProperty(propName) == null)
                 throw new BadParameterException();
 
@@ -113,32 +113,32 @@ namespace Back.Services
         /// <summary>
         /// Get Properties from Values | if idName is empty, use RepNameId
         /// </summary>
-        protected virtual List<object> GetProperty<T>(IEnumerable<T> values, IEnumerable<String> idNames = null)
+        protected virtual List<object> GetProperty<T>(IEnumerable<T> values, IEnumerable<String> fields = null)
         {
             List<object> result = new List<object>();
             foreach (T value in values)
-                foreach (var idName in idNames ?? new List<String>() { _BaseRepository.nameId })
-                    if (value.GetType().GetProperty(idName) != null)
-                        result.Add(GetProperty(value, idName));
+                foreach (var field in fields ?? new List<String>() { _BaseRepository.nameId })
+                    if (value.GetType().GetProperty(field) != null)
+                        result.Add(GetProperty(value, field));
                     else
                         throw new BadParameterException();
 
             return result;
         }
 
-        protected virtual T GetDataByProperties<T>(IEnumerable<T> values, IEnumerable<String> idNames = null, Boolean combine = false, Boolean all = false)
+        protected virtual T GetDataByProperties<T>(IEnumerable<T> values, IEnumerable<String> fields = null, Boolean combine = false, Boolean all = false)
         {
-            return Validate(_BaseRepository.GetDataTop1<T>(GetProperty(values, idNames).Select(x => x.ToString()), idNames, combine, all));
+            return Validate(_BaseRepository.GetDataTop1<T>(GetProperty(values, fields).Select(x => x.ToString()), fields, combine, all));
         }
 
-        protected virtual IEnumerable<T> GetDatasByProperties<T>(IEnumerable<T> values, IEnumerable<String> idNames = null, Boolean combine = false, Boolean all = false)
+        protected virtual IEnumerable<T> GetDatasByProperties<T>(IEnumerable<T> values, IEnumerable<String> fields = null, Boolean combine = false, Boolean all = false)
         {
-            return Validate(_BaseRepository.GetData<T>(GetProperty(values, idNames).Select(x => x.ToString()), idNames, combine, all));
+            return Validate(_BaseRepository.GetData<T>(GetProperty(values, fields).Select(x => x.ToString()), fields, combine, all));
         }
 
-        protected virtual Boolean ExistsDatasByProperties<T>(IEnumerable<T> values, IEnumerable<String> idNames = null, Boolean combine = false, Boolean all = false)
+        protected virtual Boolean ExistsDatasByProperties<T>(IEnumerable<T> values, IEnumerable<String> fields = null, Boolean combine = false, Boolean all = false)
         {
-            return _BaseRepository.ExistsData<T>(GetProperty(values, idNames).Select(x => x.ToString()), idNames, values.Count(), combine, all);
+            return _BaseRepository.ExistsData<T>(GetProperty(values, fields).Select(x => x.ToString()), fields, values.Count(), combine, all);
         }
 
         #endregion
@@ -148,18 +148,18 @@ namespace Back.Services
             return Validate(_BaseRepository.GetIdentity<T>());
         }
 
-        public virtual IEnumerable<T> GetByIds<T>(IEnumerable<Guid> ids, Boolean all = false, String idName = "id")
+        public virtual IEnumerable<T> GetByIds<T>(IEnumerable<Guid> values, Boolean all = false, String field = "id")
         {
-            ParameterValidate(ids);
+            ParameterValidate(values);
 
-            return Validate(_BaseRepository.GetData<T>(ids, all, idName));
+            return Validate(_BaseRepository.GetData<T>(values, all, field));
         }
 
-        public virtual IEnumerable<T> GetByIds<T>(IEnumerable<string> fields, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> GetByIds<T>(IEnumerable<string> values, Boolean all = false, String field = "id", Boolean lower = true)
         {
-            ParameterValidate(fields);
+            ParameterValidate(values);
 
-            return Validate(_BaseRepository.GetData<T>(fields, all, fieldName, lower));
+            return Validate(_BaseRepository.GetData<T>(values, all, field, lower));
         }
 
         public virtual IEnumerable<T> Get<T>(Boolean all = false)
@@ -167,95 +167,95 @@ namespace Back.Services
             return Validate(_BaseRepository.GetData<T>(all));
         }
 
-        public virtual T Get<T>(Guid id, Boolean all = false)
+        public virtual T Get<T>(Guid value, Boolean all = false)
         {
-            ParameterValidate(id);
+            ParameterValidate(value);
 
-            return Validate(_BaseRepository.GetData<T>(id, all), true);
+            return Validate(_BaseRepository.GetData<T>(value, all), true);
         }
 
-        public virtual T Get<T>(int id, Boolean all = false)
+        public virtual T Get<T>(int value, Boolean all = false)
         {
-            ParameterValidate(id);
+            ParameterValidate(value);
 
-            return Validate(_BaseRepository.GetData<T>(id, all), true);
+            return Validate(_BaseRepository.GetData<T>(value, all), true);
         }
 
-        public virtual IEnumerable<T> Get<T>(String field, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> Get<T>(String value, Boolean all = false, String field = "id", Boolean lower = true)
         {
-            ParameterValidate(field);
+            ParameterValidate(value);
 
-            return Validate(_BaseRepository.GetData<T>(field, all, fieldName, lower));
+            return Validate(_BaseRepository.GetData<T>(value, all, field, lower));
         }
 
-        public virtual IEnumerable<T> GetNull<T>(Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> GetNull<T>(Boolean all = false, String field = "id", Boolean lower = true)
         {
-            return Validate(_BaseRepository.GetDataNull<T>(all, fieldName, lower));
+            return Validate(_BaseRepository.GetDataNull<T>(all, field, lower));
         }
 
-        public virtual IEnumerable<T> GetNot<T>(String field, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> GetNot<T>(String value, Boolean all = false, String field = "id", Boolean lower = true)
         {
-            ParameterValidate(field);
+            ParameterValidate(value);
 
-            return Validate(_BaseRepository.GetDataNot<T>(field, all, fieldName, lower));
+            return Validate(_BaseRepository.GetDataNot<T>(value, all, field, lower));
         }
 
-        public virtual IEnumerable<T> Get<T>(DateTime field, Boolean all = false, String fieldName = "id")
+        public virtual IEnumerable<T> Get<T>(DateTime value, Boolean all = false, String field = "id")
         {
-            ParameterValidate(field);
+            ParameterValidate(value);
 
-            return Validate(_BaseRepository.GetData<T>(field, all, fieldName));
+            return Validate(_BaseRepository.GetData<T>(value, all, field));
         }
 
-        public virtual IEnumerable<T> Get<T>(Guid Id, IEnumerable<String> idNames, Boolean all = false)
+        public virtual IEnumerable<T> Get<T>(Guid value, IEnumerable<String> fields, Boolean all = false)
         {
-            if (!ParameterValidate(Id) || !ParameterValidate(idNames))
+            if (!ParameterValidate(value) || !ParameterValidate(fields))
                 throw new BadParameterException();
 
-            return Validate(_BaseRepository.GetData<T>(new List<String>() { Id.ToString() }, idNames, false, all));
+            return Validate(_BaseRepository.GetData<T>(new List<String>() { value.ToString() }, fields, false, all));
         }
 
-        public virtual IEnumerable<T> Get<T>(IEnumerable<Guid> ids, IEnumerable<String> idNames, Boolean combine = false, Boolean all = false)
+        public virtual IEnumerable<T> Get<T>(IEnumerable<Guid> values, IEnumerable<String> fields, Boolean combine = false, Boolean all = false)
         {
-            if (!ParameterValidate(ids) || !ParameterValidate(idNames) || ids.Count() != idNames.Count())
+            if (!ParameterValidate(values) || !ParameterValidate(fields) || values.Count() != fields.Count())
                 throw new BadParameterException();
 
-            return Validate(_BaseRepository.GetData<T>(ids.Select(x => x.ToString()), idNames, combine, all));
+            return Validate(_BaseRepository.GetData<T>(values.Select(x => x.ToString()), fields, combine, all));
         }
 
-        public virtual IEnumerable<T> Get<T>(IEnumerable<String> fields, IEnumerable<String> fieldNames, Boolean combine = false, Boolean all = false)
+        public virtual IEnumerable<T> Get<T>(IEnumerable<String> values, IEnumerable<String> fields, Boolean combine = false, Boolean all = false)
         {
-            if (!ParameterValidate(fields) || !ParameterValidate(fieldNames) /*|| fields.Count() != fieldNames.Count()*/)
+            if (!ParameterValidate(values) || !ParameterValidate(fields)) /*|| fields.Count() != fieldNames.Count()*/
                 throw new BadParameterException();
 
-            return Validate(_BaseRepository.GetData<T>(fields, fieldNames, combine, all));
+            return Validate(_BaseRepository.GetData<T>(values, fields, combine, all));
         }
 
-        public virtual IEnumerable<T> GetLike<T>(String field, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> GetLike<T>(String value, Boolean all = false, String field = "id", Boolean lower = true)
         {
-            ParameterValidate(field);
+            ParameterValidate(value);
 
-            return Validate(_BaseRepository.GetDataLike<T>(field, all, fieldName, lower));
+            return Validate(_BaseRepository.GetDataLike<T>(value, all, field, lower));
         }
 
         #region Top 1
 
-        public virtual T GetTop1<T>(String field, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual T GetTop1<T>(String value, Boolean all = false, String field = "id", Boolean lower = true)
         {
-            ParameterValidate(field);
+            ParameterValidate(value);
 
-            return Validate(_BaseRepository.GetDataTop1<T>(field, all, fieldName, lower));
+            return Validate(_BaseRepository.GetDataTop1<T>(value, all, field, lower));
         }
 
         #endregion
 
         #region Post
 
-        public virtual T Post<T>(T value, IEnumerable<String> idNames = null, Boolean combine = false)
+        public virtual T Post<T>(T value, IEnumerable<String> fields = null, Boolean combine = false)
         {
             ParameterValidate(value);
 
-            if (ExistsDatasByProperties(new List<T>() { value }, idNames, combine))
+            if (ExistsDatasByProperties(new List<T>() { value }, fields, combine))
                 throw new ConflictException();
 
             Creating(ref value);
@@ -268,15 +268,15 @@ namespace Back.Services
                 throw new NoRowAffectedException();
         }
 
-        public virtual IEnumerable<T> PostMultiple<T>(IEnumerable<T> values, IEnumerable<String> idNames = null, Boolean combine = false)
+        public virtual IEnumerable<T> PostMultiple<T>(IEnumerable<T> values, IEnumerable<String> fields = null, Boolean combine = false)
         {
             ParameterValidate(values);
 
-            if (values.GetType().GetProperty(_BaseRepository.nameId) != null && ExistsDatasByProperties(values, idNames, combine))
+            if (values.GetType().GetProperty(_BaseRepository.nameId) != null && ExistsDatasByProperties(values, fields, combine))
                 throw new ConflictException();
 
             values.ToList().ForEach(value => Creating(ref value));
-            if (_BaseRepository.PostDataMultiple<T>(values, idNames))
+            if (_BaseRepository.PostDataMultiple<T>(values, fields))
             {
                 Created(ref values);
                 return values;
@@ -289,13 +289,13 @@ namespace Back.Services
 
         #region Put
 
-        public virtual T Put<T>(T value, IEnumerable<String> idNames = null, Boolean combine = false, Boolean all = false)
+        public virtual T Put<T>(T value, IEnumerable<String> fields = null, Boolean combine = false, Boolean all = false)
         {
-            idNames = _BaseRepository.ValidateIdNames(idNames, true);
-            if (!ParameterValidate(value) || !ParameterValidate(idNames))
+            fields = _BaseRepository.ValidateIdNames(fields, true);
+            if (!ParameterValidate(value) || !ParameterValidate(fields))
                 throw new BadParameterException();
 
-            T result = Validate(GetDataByProperties(new List<T>() { value }, idNames, combine, all), true);
+            T result = Validate(GetDataByProperties(new List<T>() { value }, fields, combine, all), true);
             if (result == null) //!ExistsDatasByProperties(new List<T>() { value }, idNames, combine, all)
                 throw new ConflictException();
             if (result.Equals(value))
@@ -307,7 +307,7 @@ namespace Back.Services
 
             Updating(ref value);
 
-            if (_BaseRepository.PutData<T>(value, idNames, combine))
+            if (_BaseRepository.PutData<T>(value, fields, combine))
             {
                 Updated(ref value);
                 return value;
@@ -316,13 +316,13 @@ namespace Back.Services
                 throw new NoRowAffectedException();
         }
 
-        public virtual IEnumerable<T> PutMultiple<T>(IEnumerable<T> values, IEnumerable<String> idNames = null, Boolean combine = false, Boolean all = false)
+        public virtual IEnumerable<T> PutMultiple<T>(IEnumerable<T> values, IEnumerable<String> fields = null, Boolean combine = false, Boolean all = false)
         {
-            idNames = _BaseRepository.ValidateIdNames(idNames, true);
+            fields = _BaseRepository.ValidateIdNames(fields, true);
             if (!ParameterValidate(values))
                 throw new BadParameterException();
 
-            IEnumerable<T> results = Validate(GetDatasByProperties(values, idNames, combine, all));
+            IEnumerable<T> results = Validate(GetDatasByProperties(values, fields, combine, all));
             for (int i = 0; i < values.Count(); i++)
             {
                 T value = values.ElementAt(i);
@@ -353,17 +353,17 @@ namespace Back.Services
 
         #endregion
 
-        public virtual T Delete<T>(Guid id)
+        public virtual T Delete<T>(Guid value)
         {
-            ParameterValidate(id);
-            T value = Validate(_BaseRepository.GetData<T>(id));
+            ParameterValidate(value);
+            T result = Validate(_BaseRepository.GetData<T>(value));
 
-            Deleting(ref value);
+            Deleting(ref result);
 
-            if (_BaseRepository.PutData<T>(value))
+            if (_BaseRepository.PutData<T>(result))
             {
-                Deleted(ref value);
-                return value;
+                Deleted(ref result);
+                return result;
             }
             else
                 throw new NoRowAffectedException();
@@ -391,45 +391,45 @@ namespace Back.Services
                 throw new NoRowAffectedException();
         }
 
-        public virtual T Delete<T>(IEnumerable<Guid> ids, IEnumerable<String> idNames, Boolean combine = false, Boolean all = false)
+        public virtual T Delete<T>(IEnumerable<Guid> values, IEnumerable<String> fields, Boolean combine = false, Boolean all = false)
         {
-            if (!ParameterValidate(ids) || !ParameterValidate(idNames) || ids.Count() != idNames.Count())
+            if (!ParameterValidate(values) || !ParameterValidate(fields) || values.Count() != fields.Count())
                 throw new BadParameterException();
 
-            T value = Validate(_BaseRepository.GetData<T>(ids.Select(x => x.ToString()), idNames, combine, all).FirstOrDefault());
+            T result = Validate(_BaseRepository.GetData<T>(values.Select(x => x.ToString()), fields, combine, all).FirstOrDefault());
 
-            Deleting(ref value);
+            Deleting(ref result);
 
-            if (_BaseRepository.PutData<T>(value, idNames, combine))
+            if (_BaseRepository.PutData<T>(result, fields, combine))
             {
-                Deleted(ref value);
-                return value;
+                Deleted(ref result);
+                return result;
             }
             else
                 throw new NoRowAffectedException();
         }
 
-        public virtual T Drop<T>(Guid id)
+        public virtual T Drop<T>(Guid value)
         {
-            ParameterValidate(id);
-            T value = Validate(_BaseRepository.GetData<T>(id));
+            ParameterValidate(value);
+            T result = Validate(_BaseRepository.GetData<T>(value));
 
-            Deleting(ref value);
+            Deleting(ref result);
 
-            if (_BaseRepository.DeleteData<T>(value))
+            if (_BaseRepository.DeleteData<T>(result))
             {
-                Deleted(ref value);
+                Deleted(ref result);
                 throw new NoContentException();
             }
             else
                 throw new NoRowAffectedException();
         }
 
-        public virtual Boolean Drop<T>(IEnumerable<Guid> ids)
+        public virtual Boolean Drop<T>(IEnumerable<Guid> values)
         {
-            ParameterValidate(ids);
+            ParameterValidate(values);
 
-            if (_BaseRepository.DeleteData<T>(ids))
+            if (_BaseRepository.DeleteData<T>(values))
                 return true;
             else
                 throw new NoRowAffectedException();
@@ -484,54 +484,54 @@ namespace Back.Services
                 throw new NoRowAffectedException();
         }
 
-        public virtual T Drop<T>(IEnumerable<Guid> ids, IEnumerable<String> idNames, Boolean combine = false, Boolean all = false)
+        public virtual T Drop<T>(IEnumerable<Guid> values, IEnumerable<String> fields, Boolean combine = false, Boolean all = false)
         {
-            if (!ParameterValidate(ids) || !ParameterValidate(idNames) || ids.Count() != idNames.Count())
+            if (!ParameterValidate(values) || !ParameterValidate(fields) || values.Count() != fields.Count())
                 throw new BadParameterException();
 
-            T value = Validate(_BaseRepository.GetData<T>(ids.Select(x => x.ToString()), idNames, combine, all).FirstOrDefault());
+            T result = Validate(_BaseRepository.GetData<T>(values.Select(x => x.ToString()), fields, combine, all).FirstOrDefault());
 
-            Deleting(ref value);
+            Deleting(ref result);
 
-            if (_BaseRepository.DeleteData<T>(value, idNames, combine))
+            if (_BaseRepository.DeleteData<T>(result, fields, combine))
             {
-                Deleted(ref value);
+                Deleted(ref result);
                 throw new NoContentException();
             }
             else
                 throw new NoRowAffectedException();
         }
 
-        public virtual T GetHist<T>(Guid id, Boolean all = false)
+        public virtual T GetHist<T>(Guid value, Boolean all = false)
         {
-            ParameterValidate(id);
+            ParameterValidate(value);
 
-            return Validate(_BaseRepository.GetHist<T>(id, all), true);
+            return Validate(_BaseRepository.GetHist<T>(value, all), true);
         }
 
-        public virtual IEnumerable<T> GetByHist<T>(Guid id, Boolean all = false, String idName = "id")
+        public virtual IEnumerable<T> GetByHist<T>(Guid value, Boolean all = false, String fields = "id")
         {
-            return GetByHist<T>(id.ToString(), all, idName, false, true);
+            return GetByHist<T>(value.ToString(), all, fields, false, true);
         }
 
-        public virtual IEnumerable<T> GetByHist<T>(int id, Boolean all = false, String idName = "id")
+        public virtual IEnumerable<T> GetByHist<T>(int value, Boolean all = false, String fields = "id")
         {
-            return GetByHist<T>(id.ToString(), all, idName, false, true);
+            return GetByHist<T>(value.ToString(), all, fields, false, true);
         }
 
-        public virtual IEnumerable<T> GetByHist<T>(String field, Boolean all = false, String fieldName = "id", Boolean lower = true, Boolean isImportant = false)
+        public virtual IEnumerable<T> GetByHist<T>(String value, Boolean all = false, String field = "id", Boolean lower = true, Boolean isImportant = false)
         {
-            ParameterValidate(field);
+            ParameterValidate(value);
 
-            return Validate(_BaseRepository.GetByHist<T>(field, all, fieldName, lower), isImportant);
+            return Validate(_BaseRepository.GetByHist<T>(value, all, field, lower), isImportant);
         }
 
-        public virtual IEnumerable<T> GetByHist<T>(IEnumerable<Guid> ids, IEnumerable<String> idNames, Boolean combine = false)
+        public virtual IEnumerable<T> GetByHist<T>(IEnumerable<Guid> value, IEnumerable<String> fields, Boolean combine = false)
         {
-            if (!ParameterValidate(ids) || !ParameterValidate(idNames) || ids.Count() != idNames.Count())
+            if (!ParameterValidate(value) || !ParameterValidate(fields) || value.Count() != fields.Count())
                 throw new BadParameterException();
 
-            return Validate(_BaseRepository.GetByHist<T>(ids, idNames, combine));
+            return Validate(_BaseRepository.GetByHist<T>(value, fields, combine));
         }
 
         #region UnitTest

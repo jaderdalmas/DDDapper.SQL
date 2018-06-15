@@ -4,6 +4,6 @@ namespace Back.Exceptions
 {
     public class NotFoundException : Exception
     {
-        public NotFoundException() : base("") { }
+        public NotFoundException() : base("HttpCode: 404") { }
     }
 }

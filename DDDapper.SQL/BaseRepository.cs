@@ -92,33 +92,33 @@ namespace Back.Repositories
         /// <summary>
         /// Validate idNames and fill if necessary
         /// </summary>
-        public List<String> ValidateIdNames(IEnumerable<String> idNames, Boolean isNotNull = false)
+        public List<String> ValidateIdNames(IEnumerable<String> fields, Boolean isNotNull = false)
         {
-            List<String> ids = new List<String>();
-            if (idNames != null) // if not null (add range)
-                ids.AddRange(idNames);
+            List<String> values = new List<String>();
+            if (fields != null) // if not null (add range)
+                values.AddRange(fields);
             //if (ids.Any(x => x.Contains("id"))) // if has any id (add id)
             //    ids.Add("id");
-            if (!ids.Any() && (repType == RepType.intType || isNotNull)) // if id is int or isNotNull (add nameId)
-                ids.Add(nameId);
+            if (!values.Any() && (repType == RepType.intType || isNotNull)) // if id is int or isNotNull (add nameId)
+                values.Add(nameId);
 
-            return ids.Distinct().ToList();
+            return values.Distinct().ToList();
         }
 
-        protected void GetFieldName(ref StringBuilder query, String fieldName, Boolean lower = true)
+        protected void GetFieldName(ref StringBuilder query, String field, Boolean lower = true)
         {
             if (lower)
                 query.Append("lower(");
 
-            query.Append(fieldName);
+            query.Append(field);
 
             if (lower)
                 query.Append(")");
         }
 
-        protected void GetIdComparer(ref StringBuilder query, IEnumerable<String> idNames = null, Boolean combine = false)
+        protected void GetIdComparer(ref StringBuilder query, IEnumerable<String> fields = null, Boolean combine = false)
         {
-            List<String> ids = ValidateIdNames(idNames);
+            List<String> ids = ValidateIdNames(fields);
 
             if (combine)
                 query.Append("(");
@@ -192,50 +192,50 @@ namespace Back.Repositories
             }
         }
 
-        protected void GetQueryList(ref StringBuilder query, IEnumerable<int> ids)
+        protected void GetQueryList(ref StringBuilder query, IEnumerable<int> values)
         {
-            GetQueryList(ref query, ids.Select(x => x.ToString()));
+            GetQueryList(ref query, values.Select(x => x.ToString()));
         }
 
-        protected void GetQueryList(ref StringBuilder query, IEnumerable<Guid> ids)
+        protected void GetQueryList(ref StringBuilder query, IEnumerable<Guid> values)
         {
-            GetQueryList(ref query, ids.Select(x => x.ToString()));
+            GetQueryList(ref query, values.Select(x => x.ToString()));
         }
 
-        protected void GetQueryList(ref StringBuilder query, IEnumerable<String> names)
+        protected void GetQueryList(ref StringBuilder query, IEnumerable<String> values)
         {
             query.Append("('");
-            query.Append(String.Join("','", names.Select(x => x.Replace("'", ""))));
+            query.Append(String.Join("','", values.Select(x => x.Replace("'", ""))));
             query.Append("')");
         }
 
-        protected void GetQueryParameters(ref StringBuilder query, IEnumerable<String> field, IEnumerable<String> fieldNames, Boolean combine = false)
+        protected void GetQueryParameters(ref StringBuilder query, IEnumerable<String> values, IEnumerable<String> fields, Boolean combine = false)
         {
-            bool isMultiple = (field.Count() / fieldNames.Count()) != 1; // A1B1C1 - A2B2C2 - A3B3C3 | MultipleFields
+            bool isMultiple = (values.Count() / fields.Count()) != 1; // A1B1C1 - A2B2C2 - A3B3C3 | MultipleFields
 
             if (isMultiple) // Multiple Combines
                 query.Append("(");
-            for (int k = 0; k < (field.Count() / fieldNames.Count()); k++)
+            for (int k = 0; k < (values.Count() / fields.Count()); k++)
             {
                 if (k != 0)
                     query.Append(" or ");
 
                 if (combine) // Field Combine
                     query.Append("(");
-                for (int j = 0; j < (combine ? fieldNames.Count() : 1); j++)
+                for (int j = 0; j < (combine ? fields.Count() : 1); j++)
                 {
                     if (j != 0)
                         query.Append(" or ");
 
                     query.Append("(");
-                    for (int i = 0; i < fieldNames.Count(); i++)
+                    for (int i = 0; i < fields.Count(); i++)
                     {
                         if (i != 0)
                             query.Append(" and ");
 
-                        query.Append(fieldNames.ElementAt(i));
+                        query.Append(fields.ElementAt(i));
                         query.Append(" = '");
-                        query.Append(field.ElementAt(((i + j) % fieldNames.Count()) + (k * fieldNames.Count())).ToString());
+                        query.Append(values.ElementAt(((i + j) % fields.Count()) + (k * fields.Count())).ToString());
                         query.Append("'");
                     }
                     query.Append(")");
@@ -282,10 +282,10 @@ namespace Back.Repositories
         /// <summary>
         /// Get By Ids
         /// </summary>
-        public virtual IEnumerable<T> GetData<T>(IEnumerable<String> fields, IEnumerable<String> fieldNames, Boolean combine = false, Boolean all = false)
+        public virtual IEnumerable<T> GetData<T>(IEnumerable<String> values, IEnumerable<String> fields, Boolean combine = false, Boolean all = false)
         {
-            fieldNames = ValidateIdNames(fieldNames, true);
-            if (fields == null || fields.Count().Equals(0) || fields.Count() % fieldNames.Count() != 0)
+            fields = ValidateIdNames(fields, true);
+            if (values == null || values.Count().Equals(0) || values.Count() % fields.Count() != 0)
                 return null;
 
             StringBuilder query = new StringBuilder();
@@ -295,7 +295,7 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            GetQueryParameters(ref query, fields.ToList(), fieldNames.ToList(), combine);
+            GetQueryParameters(ref query, values.ToList(), fields.ToList(), combine);
             GetOrderBy(ref query);
 
             return dbConnection.Query<T>(query.ToString());
@@ -304,7 +304,7 @@ namespace Back.Repositories
         /// <summary>
         /// Get Field Equals
         /// </summary>
-        public virtual IEnumerable<T> GetData<T>(String field, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> GetData<T>(String value, Boolean all = false, String field = "id", Boolean lower = true)
         {
             StringBuilder query = new StringBuilder();
             query.Append("select ");
@@ -313,16 +313,16 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            GetFieldName(ref query, fieldName, lower); query.Append(" = @Id");
+            GetFieldName(ref query, field, lower); query.Append(" = @Id");
             GetOrderBy(ref query);
 
-            return dbConnection.Query<T>(query.ToString(), new { Id = field });
+            return dbConnection.Query<T>(query.ToString(), new { Id = value });
         }
 
         /// <summary>
         /// Get Field Equals
         /// </summary>
-        public virtual IEnumerable<T> GetData<T>(DateTime field, Boolean all = false, String fieldName = "id")
+        public virtual IEnumerable<T> GetData<T>(DateTime value, Boolean all = false, String field = "id")
         {
             StringBuilder query = new StringBuilder();
             query.Append("select ");
@@ -331,16 +331,16 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            query.Append(fieldName); query.Append(" = @Id");
+            query.Append(field); query.Append(" = @Id");
             GetOrderBy(ref query);
 
-            return dbConnection.Query<T>(query.ToString(), new { Id = field });
+            return dbConnection.Query<T>(query.ToString(), new { Id = value });
         }
 
         /// <summary>
         /// Get Field In
         /// </summary>
-        public virtual IEnumerable<T> GetData<T>(IEnumerable<Guid> Id, Boolean all = false, String idName = "id")
+        public virtual IEnumerable<T> GetData<T>(IEnumerable<Guid> values, Boolean all = false, String field = "id")
         {
             StringBuilder query = new StringBuilder();
             query.Append("select ");
@@ -349,16 +349,16 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            query.Append(idName); query.Append(" in @Id");
+            query.Append(field); query.Append(" in @Id");
             GetOrderBy(ref query);
 
-            return dbConnection.Query<T>(query.ToString(), new { Id = Id.Distinct() });
+            return dbConnection.Query<T>(query.ToString(), new { Id = values.Distinct() });
         }
 
         /// <summary>
         /// Get Field In
         /// </summary>
-        public virtual IEnumerable<T> GetData<T>(IEnumerable<String> field, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> GetData<T>(IEnumerable<String> values, Boolean all = false, String field = "id", Boolean lower = true)
         {
             StringBuilder query = new StringBuilder();
             query.Append("select ");
@@ -367,18 +367,18 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            GetFieldName(ref query, fieldName, lower); query.Append(" in @Id");
+            GetFieldName(ref query, field, lower); query.Append(" in @Id");
             GetOrderBy(ref query);
 
-            return dbConnection.Query<T>(query.ToString(), new { Id = field.Distinct() });
+            return dbConnection.Query<T>(query.ToString(), new { Id = values.Distinct() });
         }
 
         /// <summary>
         /// Get By Ids Related
         /// </summary>
-        public virtual IEnumerable<T> GetData<T>(Guid Id, IEnumerable<Guid> Ids, IEnumerable<String> idNames, Boolean combine = false, Boolean all = false)
+        public virtual IEnumerable<T> GetData<T>(Guid value, IEnumerable<Guid> values, IEnumerable<String> fields, Boolean combine = false, Boolean all = false)
         {
-            if (Ids == null || idNames == null || Ids.Count().Equals(0) || Ids.Count() % idNames.Count() != 0)
+            if (values == null || fields == null || values.Count().Equals(0) || values.Count() % fields.Count() != 0)
                 return null;
 
             StringBuilder query = new StringBuilder();
@@ -389,26 +389,26 @@ namespace Back.Repositories
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
             query.Append("(id = @Id and ");
-            GetQueryParameters(ref query, Ids.Select(x => x.ToString()).ToList(), idNames.ToList(), combine);
+            GetQueryParameters(ref query, values.Select(x => x.ToString()).ToList(), fields.ToList(), combine);
             query.Append(")");
             GetOrderBy(ref query);
 
-            return dbConnection.Query<T>(query.ToString(), new { Id = Id.ToString() });
+            return dbConnection.Query<T>(query.ToString(), new { Id = value.ToString() });
         }
 
         #region Top 1
 
-        public virtual T GetData<T>(int Id, Boolean all = false)
+        public virtual T GetData<T>(int value, Boolean all = false)
         {
-            return GetDataTop1<T>(Id.ToString(), all, nameId, false);
+            return GetDataTop1<T>(value.ToString(), all, nameId, false);
         }
 
-        public virtual T GetData<T>(Guid Id, Boolean all = false)
+        public virtual T GetData<T>(Guid value, Boolean all = false)
         {
-            return GetDataTop1<T>(Id.ToString(), all, nameId, false);
+            return GetDataTop1<T>(value.ToString(), all, nameId, false);
         }
 
-        public virtual T GetDataTop1<T>(String field, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual T GetDataTop1<T>(String value, Boolean all = false, String field = "id", Boolean lower = true)
         {
             StringBuilder query = new StringBuilder();
             query.Append("select top 1 ");
@@ -417,18 +417,18 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            GetFieldName(ref query, fieldName, lower); query.Append(" = @Id");
+            GetFieldName(ref query, field, lower); query.Append(" = @Id");
 
-            return dbConnection.QuerySingleOrDefault<T>(query.ToString(), new { Id = field });
+            return dbConnection.QuerySingleOrDefault<T>(query.ToString(), new { Id = value });
         }
 
         /// <summary>
         /// Get By Ids
         /// </summary>
-        public virtual T GetDataTop1<T>(IEnumerable<String> fields, IEnumerable<String> fieldNames = null, Boolean combine = false, Boolean all = false)
+        public virtual T GetDataTop1<T>(IEnumerable<String> values, IEnumerable<String> fields = null, Boolean combine = false, Boolean all = false)
         {
-            fieldNames = ValidateIdNames(fieldNames, true);
-            if (fields == null || fields.Count().Equals(0) || fields.Count() % fieldNames.Count() != 0)
+            fields = ValidateIdNames(fields, true);
+            if (values == null || values.Count().Equals(0) || values.Count() % fields.Count() != 0)
                 return (T)(new object());
 
             StringBuilder query = new StringBuilder();
@@ -438,7 +438,7 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            GetQueryParameters(ref query, fields.ToList(), fieldNames.ToList(), combine);
+            GetQueryParameters(ref query, values.ToList(), fields.ToList(), combine);
             GetOrderBy(ref query);
 
             return dbConnection.QuerySingleOrDefault<T>(query.ToString());
@@ -446,7 +446,7 @@ namespace Back.Repositories
 
         #endregion
 
-        public virtual IEnumerable<T> GetDataNull<T>(Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> GetDataNull<T>(Boolean all = false, String field = "id", Boolean lower = true)
         {
             StringBuilder query = new StringBuilder();
             query.Append("select ");
@@ -455,13 +455,13 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            GetFieldName(ref query, fieldName, lower); query.Append(" is null");
+            GetFieldName(ref query, field, lower); query.Append(" is null");
             GetOrderBy(ref query);
 
             return dbConnection.Query<T>(query.ToString());
         }
 
-        public virtual IEnumerable<T> GetDataNot<T>(String field, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> GetDataNot<T>(String value, Boolean all = false, String field = "id", Boolean lower = true)
         {
             StringBuilder query = new StringBuilder();
             query.Append("select ");
@@ -470,13 +470,13 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            GetFieldName(ref query, fieldName, lower); query.Append(" <> @Id");
+            GetFieldName(ref query, field, lower); query.Append(" <> @Id");
             GetOrderBy(ref query);
 
-            return dbConnection.Query<T>(query.ToString(), new { Id = field });
+            return dbConnection.Query<T>(query.ToString(), new { Id = value });
         }
 
-        public virtual IEnumerable<T> GetDataLike<T>(String field, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> GetDataLike<T>(String value, Boolean all = false, String field = "id", Boolean lower = true)
         {
             StringBuilder query = new StringBuilder();
             query.Append("select ");
@@ -485,30 +485,30 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            GetFieldName(ref query, fieldName, lower); query.Append(" like '%@Id%'");
+            GetFieldName(ref query, field, lower); query.Append(" like '%@Id%'");
             GetOrderBy(ref query);
 
-            return dbConnection.Query<T>(query.ToString(), new { Id = field });
+            return dbConnection.Query<T>(query.ToString(), new { Id = value });
         }
 
         #region Exists (select 1)
 
-        public virtual bool ExistsData<T>(String field, int amount = 1, Boolean all = false, String fieldName = "id")
+        public virtual bool ExistsData<T>(String value, int amount = 1, Boolean all = false, String field = "id")
         {
             StringBuilder query = new StringBuilder();
             query.Append("select count(1) from ");
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            query.Append(fieldName); query.Append(" = @Id");
+            query.Append(field); query.Append(" = @Id");
 
-            return dbConnection.ExecuteScalar<int>(query.ToString(), new { Id = field }).Equals(amount);
+            return dbConnection.ExecuteScalar<int>(query.ToString(), new { Id = value }).Equals(amount);
         }
 
-        public virtual bool ExistsData<T>(IEnumerable<String> Ids, IEnumerable<String> idNames = null, int amount = 1, Boolean combine = false, Boolean all = false)
+        public virtual bool ExistsData<T>(IEnumerable<String> values, IEnumerable<String> fields = null, int amount = 1, Boolean combine = false, Boolean all = false)
         {
-            idNames = ValidateIdNames(idNames, true);
-            if (Ids == null || idNames == null || Ids.Count().Equals(0) || Ids.Count() % idNames.Count() != 0)
+            fields = ValidateIdNames(fields, true);
+            if (values == null || fields == null || values.Count().Equals(0) || values.Count() % fields.Count() != 0)
                 return false;
 
             StringBuilder query = new StringBuilder();
@@ -516,14 +516,14 @@ namespace Back.Repositories
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
-            GetQueryParameters(ref query, Ids.ToList(), idNames.ToList(), combine);
+            GetQueryParameters(ref query, values.ToList(), fields.ToList(), combine);
 
             return dbConnection.ExecuteScalar<int>(query.ToString()).Equals(amount);
         }
 
-        public virtual bool ExistsData<T>(Guid Id, IEnumerable<Guid> Ids, IEnumerable<String> idNames, int amount = 1, Boolean combine = false, Boolean all = false)
+        public virtual bool ExistsData<T>(Guid value, IEnumerable<Guid> values, IEnumerable<String> fields, int amount = 1, Boolean combine = false, Boolean all = false)
         {
-            if (Ids == null || idNames == null || Ids.Count().Equals(0) || idNames.Count().Equals(0) || Ids.Count() % idNames.Count() != 0)
+            if (values == null || fields == null || values.Count().Equals(0) || fields.Count().Equals(0) || values.Count() % fields.Count() != 0)
                 return false;
 
             StringBuilder query = new StringBuilder();
@@ -532,20 +532,20 @@ namespace Back.Repositories
             query.Append(" where ");
             query.Append((all ? "" : activeId + " and "));
             query.Append("(id = @Id or ");
-            GetQueryParameters(ref query, Ids.Select(x => x.ToString()).ToList(), idNames.ToList(), combine);
+            GetQueryParameters(ref query, values.Select(x => x.ToString()).ToList(), fields.ToList(), combine);
             query.Append(")");
 
-            return dbConnection.ExecuteScalar<int>(query.ToString(), new { Id = Id.ToString() }).Equals(amount);
+            return dbConnection.ExecuteScalar<int>(query.ToString(), new { Id = value.ToString() }).Equals(amount);
         }
 
         #endregion
 
         #region Post
 
-        public virtual bool PostData<T>(T obj, IEnumerable<String> idNames = null)
+        public virtual bool PostData<T>(T obj, IEnumerable<String> fields = null)
         {
-            idNames = ValidateIdNames(idNames);
-            IEnumerable<String> properties = GetProperties(typeof(T), idNames);
+            fields = ValidateIdNames(fields);
+            IEnumerable<String> properties = GetProperties(typeof(T), fields);
 
             StringBuilder query = new StringBuilder();
             query.Append("insert into ");
@@ -560,16 +560,16 @@ namespace Back.Repositories
             return dbConnection.Execute(query.ToString(), obj) > 0;
         }
 
-        public virtual bool PostDataMultiple<T>(IEnumerable<T> obj, IEnumerable<String> idNames = null)
+        public virtual bool PostDataMultiple<T>(IEnumerable<T> obj, IEnumerable<String> fields = null)
         {
-            idNames = ValidateIdNames(idNames);
+            fields = ValidateIdNames(fields);
             int result = 0;
             dbConnection.Open();
             using (SqlTransaction tran = dbConnection.BeginTransaction())
             {
                 try
                 { // multiple operations involving cn and tran here
-                    IEnumerable<String> properties = GetProperties(typeof(T), idNames);
+                    IEnumerable<String> properties = GetProperties(typeof(T), fields);
                     foreach (T item in obj)
                     {
                         StringBuilder query = new StringBuilder();
@@ -601,10 +601,10 @@ namespace Back.Repositories
 
         #region Put
 
-        public virtual bool PutData<T>(T obj, IEnumerable<String> idNames = null, Boolean combine = false)
+        public virtual bool PutData<T>(T obj, IEnumerable<String> fields = null, Boolean combine = false)
         {
-            IEnumerable<String> properties = GetProperties(typeof(T), idNames);
-            idNames = ValidateIdNames(idNames, true);
+            IEnumerable<String> properties = GetProperties(typeof(T), fields);
+            fields = ValidateIdNames(fields, true);
 
             StringBuilder query = new StringBuilder();
             query.Append("update ");
@@ -612,7 +612,7 @@ namespace Back.Repositories
             query.Append(" set ");
             query.Append(String.Join(",", properties.Select(x => String.Format("[{0}] = @{1}", x, x))));
             query.Append(" where ");
-            GetIdComparer(ref query, idNames, combine);
+            GetIdComparer(ref query, fields, combine);
             GetQueryHist(ref query, obj);
 
             return dbConnection.Execute(query.ToString(), obj) > 0;
@@ -703,7 +703,7 @@ namespace Back.Repositories
             return result > 0;
         }
 
-        public virtual bool DeleteData<T>(IEnumerable<Guid> Id)
+        public virtual bool DeleteData<T>(IEnumerable<Guid> values)
         {
             IEnumerable<String> properties = GetProperties(typeof(T));
 
@@ -713,12 +713,12 @@ namespace Back.Repositories
             query.Append(" where ");
             query.Append(nameId); query.Append(" in @Id");
 
-            return dbConnection.Execute(query.ToString(), new { Id = Id.Distinct() }) > 0;
+            return dbConnection.Execute(query.ToString(), new { Id = values.Distinct() }) > 0;
         }
 
-        public virtual bool DeleteData<T>(T obj, IEnumerable<String> idNames, Boolean combine = false)
+        public virtual bool DeleteData<T>(T obj, IEnumerable<String> fields, Boolean combine = false)
         {
-            if (idNames == null || idNames.Count().Equals(0))
+            if (fields == null || fields.Count().Equals(0))
                 return false;
 
             IEnumerable<String> properties = GetProperties(typeof(T));
@@ -727,7 +727,7 @@ namespace Back.Repositories
             query.Append("delete ");
             query.Append(GetTableName(typeof(T)));
             query.Append(" where ");
-            GetIdComparer(ref query, idNames, combine);
+            GetIdComparer(ref query, fields, combine);
             GetQueryHist(ref query, obj);
 
             return dbConnection.Execute(query.ToString(), obj) > 0;
@@ -740,7 +740,7 @@ namespace Back.Repositories
         /// <summary>
         /// Get Hist
         /// </summary>
-        public virtual T GetHist<T>(Guid Id, Boolean all = false)
+        public virtual T GetHist<T>(Guid value, Boolean all = false)
         {
             StringBuilder query = new StringBuilder();
             query.Append("select top 1 ");
@@ -752,13 +752,13 @@ namespace Back.Repositories
             query.Append(histId); query.Append(" = @Id");
             GetOrderBy(ref query);
 
-            return dbConnection.QuerySingleOrDefault<T>(query.ToString(), new { Id = Id.ToString() });
+            return dbConnection.QuerySingleOrDefault<T>(query.ToString(), new { Id = value.ToString() });
         }
 
         /// <summary>
         /// Get Hist List By Id
         /// </summary>
-        public virtual IEnumerable<T> GetByHist<T>(Guid Id, Boolean all = true)
+        public virtual IEnumerable<T> GetByHist<T>(Guid value, Boolean all = true)
         {
             StringBuilder query = new StringBuilder();
             query.Append("select ");
@@ -770,13 +770,13 @@ namespace Back.Repositories
             query.Append(nameId); query.Append(" = @Id");
             GetOrderBy(ref query);
 
-            return dbConnection.Query<T>(query.ToString(), new { Id = Id.ToString() });
+            return dbConnection.Query<T>(query.ToString(), new { Id = value.ToString() });
         }
 
         /// <summary>
         /// Get Hist List By Id
         /// </summary>
-        public virtual IEnumerable<T> GetByHist<T>(int id, Boolean all = false)
+        public virtual IEnumerable<T> GetByHist<T>(int value, Boolean all = false)
         {
             StringBuilder query = new StringBuilder();
             query.Append("select ");
@@ -787,13 +787,13 @@ namespace Back.Repositories
             query.Append(nameId); query.Append(" = @Id");
             GetOrderBy(ref query);
 
-            return dbConnection.Query<T>(query.ToString(), new { Id = id });
+            return dbConnection.Query<T>(query.ToString(), new { Id = value });
         }
 
         /// <summary>
         /// Get Hist List By Field
         /// </summary>
-        public virtual IEnumerable<T> GetByHist<T>(String field, Boolean all = false, String fieldName = "id", Boolean lower = true)
+        public virtual IEnumerable<T> GetByHist<T>(String value, Boolean all = false, String field = "id", Boolean lower = true)
         {
             StringBuilder query = new StringBuilder();
             query.Append("select ");
@@ -801,18 +801,18 @@ namespace Back.Repositories
             query.Append(" from ");
             query.Append(GetTableName(typeof(T), true));
             query.Append(" where ");
-            GetFieldName(ref query, fieldName, lower); query.Append(" = @Id");
+            GetFieldName(ref query, field, lower); query.Append(" = @Id");
             GetOrderBy(ref query);
 
-            return dbConnection.Query<T>(query.ToString(), new { Id = field });
+            return dbConnection.Query<T>(query.ToString(), new { Id = value });
         }
 
         /// <summary>
         /// Get Hist List By Ids
         /// </summary>
-        public virtual IEnumerable<T> GetByHist<T>(IEnumerable<Guid> Ids, IEnumerable<String> idNames, Boolean combine = false)
+        public virtual IEnumerable<T> GetByHist<T>(IEnumerable<Guid> values, IEnumerable<String> fields, Boolean combine = false)
         {
-            if (Ids == null || idNames == null || Ids.Count().Equals(0) || idNames.Count().Equals(0) || Ids.Count() % idNames.Count() != 0)
+            if (values == null || fields == null || values.Count().Equals(0) || fields.Count().Equals(0) || values.Count() % fields.Count() != 0)
                 return null;
 
             StringBuilder query = new StringBuilder();
@@ -821,7 +821,7 @@ namespace Back.Repositories
             query.Append(" from ");
             query.Append(GetTableName(typeof(T), true));
             query.Append(" where ");
-            GetQueryParameters(ref query, Ids.Select(x => x.ToString()).ToList(), idNames.ToList(), combine);
+            GetQueryParameters(ref query, values.Select(x => x.ToString()).ToList(), fields.ToList(), combine);
             GetOrderBy(ref query);
 
             return dbConnection.Query<T>(query.ToString());

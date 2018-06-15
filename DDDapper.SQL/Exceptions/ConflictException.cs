@@ -4,6 +4,6 @@ namespace Back.Exceptions
 {
     public class ConflictException : Exception
     {
-        public ConflictException() : base("") { }
+        public ConflictException() : base("HttpCode: 409") { }
     }
 }
