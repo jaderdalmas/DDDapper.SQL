@@ -217,7 +217,8 @@ namespace Back.Services
 
         public virtual IEnumerable<T> Get<T>(IEnumerable<Guid> values, IEnumerable<String> fields, Boolean combine = false, Boolean all = false)
         {
-            if (!ParameterValidate(values) || !ParameterValidate(fields) || values.Count() != fields.Count())
+            fields = _BaseRepository.ValidateIdNames(fields, true);
+            if (!ParameterValidate(values) || (values.Count() % fields.Count() != 0 && !combine))
                 throw new BadParameterException();
 
             return Validate(_BaseRepository.GetData<T>(values.Select(x => x.ToString()), fields, combine, all));
@@ -338,7 +339,7 @@ namespace Back.Services
 
             values.ToList().ForEach(value => Updating(ref value));
 
-            if (_BaseRepository.PutDataMultiple<T>(values))
+            if (_BaseRepository.PutDataMultiple<T>(values, fields, combine))
             {
                 values.ToList().ForEach(value => Updated(ref value));
                 return values;
@@ -351,19 +352,19 @@ namespace Back.Services
 
         #region Delete
 
-        public virtual T Delete<T>(IEnumerable<Guid> values, IEnumerable<String> fields = null, Boolean combine = false, Boolean all = false)
+        public virtual IEnumerable<T> Delete<T>(IEnumerable<Guid> values, IEnumerable<String> fields = null, Boolean combine = false, Boolean all = false)
         {
             fields = _BaseRepository.ValidateIdNames(fields, true);
             if (!ParameterValidate(values) || (values.Count() % fields.Count() != 0 && !combine))
                 throw new BadParameterException();
 
-            T result = Validate(_BaseRepository.GetData<T>(values.Select(x => x.ToString()), fields, combine, all).FirstOrDefault());
+            IEnumerable<T> result = Validate(_BaseRepository.GetData<T>(values.Select(x => x.ToString()), fields, combine, all));
 
-            Deleting(ref result);
+            result.ToList().ForEach(value => Deleting(ref value));
 
-            if (_BaseRepository.PutData<T>(result, fields, combine))
+            if (_BaseRepository.PutDataMultiple<T>(result, fields, combine))
             {
-                Deleted(ref result);
+                result.ToList().ForEach(value => Deleted(ref value));
                 return result;
             }
             else
@@ -392,24 +393,6 @@ namespace Back.Services
                 throw new NoRowAffectedException();
         }
 
-        public virtual IEnumerable<T> DeleteMultiple<T>(IEnumerable<Guid> values, Boolean all = false, string field = "id")
-        {
-            if (!ParameterValidate(values))
-                throw new BadParameterException();
-
-            IEnumerable<T> result = Validate(_BaseRepository.GetData<T>(values, all, field));
-
-            result.ToList().ForEach(value => Deleting(ref value));
-
-            if (_BaseRepository.PutDataMultiple<T>(result))
-            {
-                result.ToList().ForEach(value => Deleted(ref value));
-                return result;
-            }
-            else
-                throw new NoRowAffectedException();
-        }
-
         public virtual IEnumerable<T> DeleteMultiple<T>(IEnumerable<T> values)
         {
             ParameterValidate(values);
@@ -429,7 +412,7 @@ namespace Back.Services
 
             values.ToList().ForEach(value => Deleting(ref value));
 
-            if (_BaseRepository.PutDataMultiple<T>(values))
+            if (_BaseRepository.PutDataMultiple<T>(values, _BaseRepository.ValidateIdNames(null, true)))
             {
                 values.ToList().ForEach(value => Deleted(ref value));
                 return values;

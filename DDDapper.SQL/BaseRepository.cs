@@ -560,7 +560,7 @@ namespace Back.Repositories
             return dbConnection.Execute(query.ToString(), obj) > 0;
         }
 
-        public virtual bool PostDataMultiple<T>(IEnumerable<T> obj, IEnumerable<String> fields = null)
+        public virtual bool PostDataMultiple<T>(IEnumerable<T> objs, IEnumerable<String> fields = null)
         {
             fields = ValidateIdNames(fields);
             int result = 0;
@@ -570,7 +570,7 @@ namespace Back.Repositories
                 try
                 { // multiple operations involving cn and tran here
                     IEnumerable<String> properties = GetProperties(typeof(T), fields);
-                    foreach (T item in obj)
+                    foreach (T item in objs)
                     {
                         StringBuilder query = new StringBuilder();
                         query.Append("insert into ");
@@ -618,7 +618,7 @@ namespace Back.Repositories
             return dbConnection.Execute(query.ToString(), obj) > 0;
         }
 
-        public virtual bool PutDataMultiple<T>(IEnumerable<T> obj)
+        public virtual bool PutDataMultiple<T>(IEnumerable<T> objs, IEnumerable<String> fields = null, Boolean combine = false)
         {
             int result = 0;
             dbConnection.Open();
@@ -627,7 +627,7 @@ namespace Back.Repositories
                 try
                 { // multiple operations involving cn and tran here
                     IEnumerable<String> properties = GetProperties(typeof(T), nameId);
-                    foreach (T item in obj)
+                    foreach (T item in objs)
                     {
                         StringBuilder query = new StringBuilder();
                         query.Append("update ");
@@ -635,7 +635,7 @@ namespace Back.Repositories
                         query.Append(" set ");
                         query.Append(String.Join(",", properties.Select(x => String.Format("[{0}] = @{1}", x, x))));
                         query.Append(" where ");
-                        GetIdComparer(ref query);
+                        GetIdComparer(ref query, fields, combine);
                         GetQueryHist(ref query, item);
 
                         result += dbConnection.Execute(query.ToString(), item, tran);
