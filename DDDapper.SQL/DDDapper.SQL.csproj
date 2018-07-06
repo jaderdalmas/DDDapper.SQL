@@ -2,23 +2,34 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RepositoryUrl>https://github.com/jaderdalmas/DDDapper.SQL.git</RepositoryUrl>
-    <RepositoryType>GitHub</RepositoryType>
-    <PackageTags></PackageTags>
-    <Copyright>Jader Dalmas</Copyright>
-    <Description>Dapper as DDD Structure to access SQL DataBase</Description>
-    <PackageReleaseNotes>Test Version</PackageReleaseNotes>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <SignAssembly>false</SignAssembly>
+    <Description>DDD in Dapper to SQL</Description>
+    <Copyright>Copyright</Copyright>
+    <PackageTags>DDD;Dapper;SQL</PackageTags>
+    <RepositoryType>GitHub</RepositoryType>
+    <RepositoryUrl>https://github.com/jaderdalmas/DDDapper.SQL</RepositoryUrl>
+    <PackageProjectUrl>https://www.nuget.org/packages/DDDapper.SQL/</PackageProjectUrl>
+    <ApplicationIcon />
+    <OutputType>Library</OutputType>
+    <StartupObject />
     <Authors>Jader Dalmas</Authors>
     <Company>Case Imagine</Company>
-    <Version>0.0.1</Version>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <NeutralLanguage></NeutralLanguage>
+    <Win32Resource />
+    <SignAssembly>false</SignAssembly>
+    <AssemblyVersion>1.0.0.0006</AssemblyVersion>
+    <FileVersion>1.0.0.0006</FileVersion>
+    <Version>1.0.0.0006</Version>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <Optimize>true</Optimize>
-    <DocumentationFile>bin\Debug\netstandard2.0\DDDapper.SQL.xml</DocumentationFile>
-  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="1.50.4" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
 
 </Project>
